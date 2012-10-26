@@ -7,10 +7,25 @@ could use a Plex client that had no interface, and was just designed to be
 operated using an iOS device or similar as a remote. Only the very barest bones
 functionality is here, but I hope that it is reasonably easy to extend.
 
-##Requirements
+##Before you install
 
-    sudo apt-get install avahi-daemon
-    sudo pip install webpy
+	sudo apt-get update && sudo apt-get upgrade
+	sudo wget https://raw.github.com/Hexxeh/rpi-update/master/rpi-update
+	sudo cp rpi-update /usr/local/bin/rpi-update
+	sudo chmod +x /usr/local/bin/rpi-update 
+	sudo rpi-update 192
+	sudo reboot
+	sudo vim config.txt > to set arm_freq to 1000
+	sudo reboot
+	mkdir apps
+	cd Apps/
+	git clone git://github.com/megawubs/pyplex.git
+	sudo apt-get install avahi-daemon
+	sudo apt-get install python-pip
+	sudo pip install web.py
+	cd pyplex/
+	sudo pip install pexpect
+	sudo apt-get install python-avahi 
 
 ##How to use
 
