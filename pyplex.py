@@ -3,7 +3,7 @@ from pyomxplayer import OMXPlayer
 from urlparse import urlparse
 import avahi, dbus
 from pprint import pprint
-import socket, pygame.image, pygame.display, subprocess, signal, os
+import socket, pygame.image, pygame.display, subprocess, signal, os, logging
 
 __all__ = ["ZeroconfService"]
 class ZeroconfService:
@@ -54,7 +54,7 @@ urls = (
 app = web.application(urls, globals())
 
 class hello:        
-    def GET(self,name):
+    def GET(self, message):
         return 'Hello, World'
 
 class xbmcCmdsXbmcHttp:
@@ -80,10 +80,13 @@ class xbmcCommands:
         f = urllib2.urlopen(fullpath)
         s = f.read()
         f.close()
-        ## print s
+        print s
         tree = et.fromstring(s)
         #get video
         el = tree.find('./Video/Media/Part')
+        key = tree.find('./Video')
+        key = key.attrib['ratingKey']
+        print key
         #print el.attrib['key']
         print 'fullpath', fullpath
         #Construct the path to the media.
@@ -94,20 +97,44 @@ class xbmcCommands:
         self.stopOMX()
         omx = OMXPlayer(mediapath)
         omx.toggle_pause()
+        while self.OMXRunning():
+            # print omx.position
+            pos = self.getMiliseconds(str(omx.position))
+            # http://192.168.1.201:32400/:/progress?key=6024&identifier=com.plexapp.plugins.library&time=37458&state=stopped
+            setPlayPos =  o.scheme + "://" + o.netloc + '/:/progress?key=' + str(key) + '&identifier=com.plexapp.plugins.library&time=' + str(pos) + "&state=playing"
+            f = urllib2.urlopen(setPlayPos)
 
-    def stopOMX(self):
+    def stopOMX(self, message = None):
+        if self.OMXRunning():
+            os.kill(self.pid, signal.SIGKILL)
+
+    def OMXRunning(self):
         p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
         out, err = p.communicate()
+        omxRunning = False
         for line in out.splitlines():
             if 'omxplayer' in line:
                 pid = int(line.split(None, 1)[0])
-                os.kill(pid, signal.SIGKILL)
+                omxRunning = True
+                self.pid = pid
+        return omxRunning
+ 
+    def getMiliseconds(self, s):
+        hours, minutes, seconds = (["0", "0"] + s.split(":"))[-3:]
+        hours = int(hours)
+        minutes = int(minutes)
+        seconds = float(seconds)
+        miliseconds = int(3600000 * hours + 60000 * minutes + 1000 * seconds)
+        return miliseconds
 
-class stop():
-    def GET(self):
-        global omx
-        omx.stop()
-        return 'received'
+    # def setPlayPos(self.)
+
+
+# class stop:
+#     def GET(self, message):
+#         global omx
+#         omx.stop()
+#         return 'received'
 
 class image:
     def __init__(self, picture):
