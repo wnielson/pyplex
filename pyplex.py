@@ -100,10 +100,21 @@ class xbmcCommands:
         while self.OMXRunning():
             # print omx.position
             pos = self.getMiliseconds(str(omx.position))
-            # http://192.168.1.201:32400/:/progress?key=6024&identifier=com.plexapp.plugins.library&time=37458&state=stopped
-            setPlayPos =  o.scheme + "://" + o.netloc + '/:/progress?key=' + str(key) + '&identifier=com.plexapp.plugins.library&time=' + str(pos) + "&state=playing"
+            #TODO: make setPlayPos a function
+            setPlayPos =  o.scheme + "://" + o.netloc + '/:/progress?key=' + str(key) + '&identifier=com.plexapp.plugins.library&time=' + str(pos) + "&state=playing" 
             f = urllib2.urlopen(setPlayPos)
 
+    def pause(self, message):
+        global omx
+        omx.toggle_pause()
+
+    def play(self, message):
+        global omx
+        omx.toggle_pause()
+
+    def stop(self, message):
+        global omx
+        omx.stop()
     def stopOMX(self, message = None):
         if self.OMXRunning():
             os.kill(self.pid, signal.SIGKILL)
@@ -127,14 +138,7 @@ class xbmcCommands:
         miliseconds = int(3600000 * hours + 60000 * minutes + 1000 * seconds)
         return miliseconds
 
-    # def setPlayPos(self.)
-
-
-# class stop:
-#     def GET(self, message):
-#         global omx
-#         omx.stop()
-#         return 'received'
+    # def setPlayPos(self, key, pos, status):
 
 class image:
     def __init__(self, picture):
