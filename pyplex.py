@@ -97,6 +97,7 @@ class xbmcCommands:
         self.stopOMX()
         omx = OMXPlayer(mediapath)
         omx.toggle_pause()
+        pygame.quit()
         while self.OMXRunning():
             # print omx.position
             pos = self.getMiliseconds(str(omx.position))
@@ -121,10 +122,7 @@ class xbmcCommands:
         global service
         pygame.quit()
         exit()
-        # service.unpublish()
         
-
-
     def stopOMX(self, message = None):
         if self.OMXRunning():
             os.kill(self.pid, signal.SIGKILL)
@@ -152,12 +150,12 @@ class xbmcCommands:
 
 class image:
     def __init__(self, picture):
-        pygame.init()
+        # pygame.init()
         self.picture = pygame.image.load(picture)
         self.picture = pygame.transform.scale(self.picture,(1280,1024))
 
     def set(self):
-        pygame.mouse.set_visible(False)
+        # pygame.mouse.set_visible(False)
         pygame.display.set_mode(self.picture.get_size())
         main_surface = pygame.display.get_surface()
         main_surface.blit(self.picture, (0, 0))
@@ -171,10 +169,10 @@ if __name__ == "__main__":
     global service
     service = ZeroconfService(name="Raspberry Plex", port=3000)
     service.publish()
-    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-    f = open(os.path.join(__location__, 'image/logo.png'));
-    image = image(f)
-    image.set()
+    #__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    #f = open(os.path.join(__location__, 'image/logo.png'));
+    #image = image(f)
+    #image.set()
     
     app.run()
     # service.unpublish()
