@@ -19,7 +19,7 @@ functionality is here, but I hope that it is reasonably easy to extend.
 	sudo reboot
 	sudo apt-get install avahi-daemon
 	sudo apt-get install python-pip
-	sudo pip install web.py
+	sudo pip install tornado
 	sudo pip install pexpect
 	sudo apt-get install python-avahi 
 	
