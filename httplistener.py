@@ -41,11 +41,11 @@ class httplistener(threading.Thread):
         print "Started HTTP listener"
         self.ioloop.start()
 
-    def ioloop_stop(self, ioloop=None):
-        ioloop.stop()
+    def ioloop_stop(self):
+        self.ioloop.stop()
 
     def stop(self):
-        self.ioloop.add_callback(ioloop_stop(ioloop=self.ioloop))
+        self.ioloop.add_callback(self.ioloop_stop)
         self._stop.set()
 
     def stopped(self):
