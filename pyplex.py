@@ -4,6 +4,10 @@ from urlparse import urlparse
 import avahi, dbus
 from pprint import pprint
 import socket, pygame.image, pygame.display, subprocess, signal, os, logging
+from threading import Thread
+import Queue
+import udplistener
+import httplistener
 
 __all__ = ["ZeroconfService"]
 class ZeroconfService:
@@ -57,30 +61,17 @@ class hello:
     def GET(self, message):
         return 'Hello, World'
 
-class xbmcCmdsXbmcHttp:
-    def GET(self):
-        string= urllib2.unquote(web.ctx.query)
-        pprint(web.ctx.query) 
-        #Get command
-        commandparse = re.search('command=(.*)\(.*', string)
-        command = commandparse.group(1)
-        #Get the args
-        commandparse = re.search('.*\((.*)\).*',string)
-        commandargs = commandparse.group(1).split(';')
-        # print command
-        #print commandargs
-        result = getattr(xbmcCmmd, command)(*commandargs)
-        return 'received'
-
 class xbmcCommands:
     def PlayMedia(self, fullpath, tag, unknown1, unknown2, unknown3):
+        global omx
+        global parsed_path
         #print '---'
         #print fullpath
         #print tag
         f = urllib2.urlopen(fullpath)
         s = f.read()
         f.close()
-        print s
+        #print s
         tree = et.fromstring(s)
         #get video
         el = tree.find('./Video/Media/Part')
@@ -90,31 +81,29 @@ class xbmcCommands:
         #print el.attrib['key']
         print 'fullpath', fullpath
         #Construct the path to the media.
-        o = urlparse(fullpath)
-        mediapath = o.scheme + "://" + o.netloc + el.attrib['key'] 
+        parsed_path = urlparse(fullpath)
+        media_key = key
+        mediapath = parsed_path.scheme + "://" + parsed_path.netloc + el.attrib['key'] 
         #print 'mediapath', mediapath
-        global omx
-        self.stopOMX()
-        omx = OMXPlayer(mediapath)
-        omx.toggle_pause()
-        while self.OMXRunning():
-            # print omx.position
-            pos = self.getMiliseconds(str(omx.position))
-            #TODO: make setPlayPos a function
-            setPlayPos =  o.scheme + "://" + o.netloc + '/:/progress?key=' + str(key) + '&identifier=com.plexapp.plugins.library&time=' + str(pos) + "&state=playing" 
-            f = urllib2.urlopen(setPlayPos)
-
-    def pause(self, message):
-        global omx
+        if(omx):
+            self.stopOMX()
+        omx = OMXPlayer(mediapath, args="-o hdmi")
         omx.toggle_pause()
 
-    def play(self, message):
+    def Pause(self, message):
         global omx
-        omx.toggle_pause()
+        if(omx):
+            omx.toggle_pause()
 
-    def stop(self, message):
+    def Play(self, message):
         global omx
-        omx.stop()
+        if(omx):
+            omx.toggle_pause()
+
+    def Stop(self, message):
+        global omx
+        if(omx):
+            omx.stop()
 
     def stopPyplex(self, message):
         self.stopOMX()
@@ -122,31 +111,11 @@ class xbmcCommands:
         pygame.quit()
         exit()
         # service.unpublish()
-        
-
 
     def stopOMX(self, message = None):
-        if self.OMXRunning():
+        if OMXRunning():
             os.kill(self.pid, signal.SIGKILL)
 
-    def OMXRunning(self):
-        p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        omxRunning = False
-        for line in out.splitlines():
-            if 'omxplayer' in line:
-                pid = int(line.split(None, 1)[0])
-                omxRunning = True
-                self.pid = pid
-        return omxRunning
- 
-    def getMiliseconds(self, s):
-        hours, minutes, seconds = (["0", "0"] + s.split(":"))[-3:]
-        hours = int(hours)
-        minutes = int(minutes)
-        seconds = float(seconds)
-        miliseconds = int(3600000 * hours + 60000 * minutes + 1000 * seconds)
-        return miliseconds
 
     # def setPlayPos(self, key, pos, status):
 
@@ -163,19 +132,84 @@ class image:
         main_surface.blit(self.picture, (0, 0))
         pygame.display.update()
 
-xbmcCmmd = xbmcCommands()
+def OMXRunning():
+    global pid
+    p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
+    out, err = p.communicate()
+    omxRunning = False
+    for line in out.splitlines():
+        if 'omxplayer' in line:
+            pid = int(line.split(None, 1)[0])
+            omxRunning = True
+    return omxRunning
 
+def getMiliseconds(s):
+    hours, minutes, seconds = (["0", "0"] + s.split(":"))[-3:]
+    hours = int(hours)
+    minutes = int(minutes)
+    seconds = float(seconds)
+    miliseconds = int(3600000 * hours + 60000 * minutes + 1000 * seconds)
+    return miliseconds
+
+xbmcCmmd = xbmcCommands()
+omx = None
+http = None
+udp = None
+pid = -1
 
 if __name__ == "__main__":
-    print "starting, please wait..."
-    global service
-    service = ZeroconfService(name="Raspberry Plex", port=3000)
-    service.publish()
-    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-    f = open(os.path.join(__location__, 'image/logo.png'));
-    image = image(f)
-    image.set()
-    
-    app.run()
-    # service.unpublish()
+    try:
+        print "starting, please wait..."
+        global service
+        global queue
+        global parsed_path
+        global media_key
+        media_key = None
+        parsed_path = None
+        queue = Queue.Queue()
+        service = ZeroconfService(name="Raspberry Plex", port=3000, text=["machineIdentifier=pi","version=2.0"])
+        service.publish()
+        udp = udplistener.udplistener(queue)
+        udp.start()
+        http = httplistener.httplistener(queue)
+        http.start()
+        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        f = open(os.path.join(__location__, 'image/logo.png'));
+        image = image(f)
+#        image.set()
+        while True:
+            try:
+                command, args = queue.get(True, 2)
+                print "Got command: %s, args: %s" %(command, args)
+                try:
+                    func = getattr(xbmcCmmd, command)
+                    func(*args)
+                except AttributeError:
+                    print "Command %s not implemented yet" % command
+                
+                # service.unpublish()
+            except Queue.Empty:
+                pass
+            if(omx and OMXRunning()):
+                # print omx.position
+                pos = getMiliseconds(str(omx.position))
+                #TODO: make setPlayPos a function
+                setPlayPos =  parsed_path.scheme + "://" + parsed_path.netloc + '/:/progress?key=' + str(media_key) + '&identifier=com.plexapp.plugins.library&time=' + str(pos) + "&state=playing" 
+                try:
+                    f = urllib2.urlopen(setPlayPos)
+                except urllib2.HTTPError:
+                    pass
+    except:
+        print "Caught exception"
+        if(udp):
+            print "Stopping UDP"
+            udp.stop()
+            print "Joining UDP"
+            udp.join()
+        if(http):
+            print "Stopping HTTP"
+            http.stop()
+            print "Joining HTTP"
+            http.join()
+        raise
 
