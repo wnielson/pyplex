@@ -27,7 +27,7 @@ functionality is here, but I hope that it is reasonably easy to extend.
 
 Launch with 
 
-    python pyplex 3000
+    python pyplex
 
 and then 'Raspberry Plex' should appear as a player you can choose in your Plex
 client. Choose your media, and select this as the player to play it on. It should 
