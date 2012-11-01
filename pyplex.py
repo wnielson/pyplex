@@ -183,8 +183,9 @@ if __name__ == "__main__":
                 print "Got command: %s, args: %s" %(command, args)
                 if not hasattr(xbmcCmmd, command):
                     print "Command %s not implemented yet" % command
-                func = getattr(xbmcCmmd, command)
-                func(*args)
+                else:
+                    func = getattr(xbmcCmmd, command)
+                    func(*args)
                 
                 # service.unpublish()
             except Queue.Empty:
