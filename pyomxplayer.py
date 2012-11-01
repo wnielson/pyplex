@@ -18,6 +18,10 @@ class OMXPlayer(object):
     _PAUSE_CMD = 'p'
     _TOGGLE_SUB_CMD = 's'
     _QUIT_CMD = 'q'
+    _JUMP_600_REV = '\x1b[B'
+    _JUMP_600_FWD = '\x1b[A'
+    _JUMP_30_FWD = '\x1b[C'
+    _JUMP_30_REV = '\x1b[D'
 
     paused = False
     subtitles_visible = True
@@ -80,6 +84,18 @@ class OMXPlayer(object):
     def stop(self):
         self._process.send(self._QUIT_CMD)
         self._process.terminate(force=True)
+
+    def jump_fwd_30(self):
+        self._process.send(self._JUMP_30_FWD)
+
+    def jump_fwd_600(self):
+        self._process.send(self._JUMP_600_FWD)
+
+    def jump_rev_30(self):
+        self._process.send(self._JUMP_30_REV)
+
+    def jump_rev_600(self):
+        self._process.send(self._JUMP_600_REV)
 
     def set_speed(self):
         raise NotImplementedError

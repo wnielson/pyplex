@@ -1,7 +1,7 @@
 import web, urllib2, re, xml.etree.cElementTree as et
 from pyomxplayer import OMXPlayer
 from urlparse import urlparse
-import avahi, dbus
+import avahi, dbus, sys
 from pprint import pprint
 import socket, pygame.image, pygame.display, subprocess, signal, os, logging
 from threading import Thread
@@ -65,6 +65,7 @@ class xbmcCommands:
     def PlayMedia(self, fullpath, tag, unknown1, unknown2, unknown3):
         global omx
         global parsed_path
+        global omxCommand
         #print '---'
         #print fullpath
         #print tag
@@ -87,14 +88,8 @@ class xbmcCommands:
         #print 'mediapath', mediapath
         if(omx):
             self.stopOMX()
-        omx = OMXPlayer(mediapath, args="-o hdmi")
+        omx = OMXPlayer(mediapath, args=omxCommand)
         omx.toggle_pause()
-        while self.OMXRunning():
-            # print omx.position
-            pos = self.getMiliseconds(str(omx.position))
-            #TODO: make setPlayPos a function
-            setPlayPos =  o.scheme + "://" + o.netloc + '/:/progress?key=' + str(key) + '&identifier=com.plexapp.plugins.library&time=' + str(pos) + "&state=playing" 
-            f = urllib2.urlopen(setPlayPos)
 
     def Pause(self, message):
         global omx
@@ -121,7 +116,29 @@ class xbmcCommands:
         if OMXRunning():
             os.kill(self.pid, signal.SIGKILL)
 
+    def SkipNext(self, message = None):
+        if(omx):
+            omx.jump_30_fwd()
 
+    def SkipPrevious(self, message = None):
+        if(omx):
+           omx.jump_30_rev()
+
+    def StepForward(self, message = None):
+        if(omx):
+           omx.jump_30_fwd()
+
+    def StepBack(self, message = None):
+        if(omx):
+            omx.jump_30_rev()
+
+    def BigStepForward(self, message = None):
+       if(omx):
+            omx.jump_600_fwd()
+
+    def BigStepBack(self, message = None):
+        if(omx):
+            omx.jump_600_rev()
     # def setPlayPos(self, key, pos, status):
 
 class image:
@@ -169,6 +186,15 @@ if __name__ == "__main__":
         global queue
         global parsed_path
         global media_key
+        global omxCommand
+        args = len(sys.argv)
+        if args > 1: 
+            if sys.argv[1] == "hdmi":
+                omxCommand = '-o hdmi'
+                print "Audo output over HDMI"
+        else:
+            omxCommand = ''
+            print "Audio output over 3,5mm jack"
         media_key = None
         parsed_path = None
         queue = Queue.Queue()
