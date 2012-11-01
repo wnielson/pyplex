@@ -116,9 +116,30 @@ class xbmcCommands:
         if OMXRunning():
             os.kill(self.pid, signal.SIGKILL)
 
+    def SkipNext(self, message = None):
+        if(omx):
+            omx.jump_30_fwd()
 
-    # def setPlayPos(self, key, pos, status):
+    def SkipPrevious(self, message = None):
+        if(omx):
+            omx.jump_30_rev()
 
+    def StepForward(self, message = None):
+        if(omx):
+            omx.jump_30_fwd()
+
+    def StepBack(self, message = None):
+        if(omx):
+            omx.jump_30_rev()
+
+    def BigStepForward(self, message = None):
+        if(omx):
+            omx.jump_600_fwd()
+
+    def BigStepBack(self, message = None):
+        if(omx):
+            omx.jump_600_rev()
+        
 class image:
     def __init__(self, picture):
         pygame.init()
