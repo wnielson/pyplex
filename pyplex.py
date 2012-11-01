@@ -181,11 +181,10 @@ if __name__ == "__main__":
             try:
                 command, args = queue.get(True, 2)
                 print "Got command: %s, args: %s" %(command, args)
-                try:
-                    func = getattr(xbmcCmmd, command)
-                    func(*args)
-                except AttributeError:
+                if not hasattr(xbmcCmmd, command):
                     print "Command %s not implemented yet" % command
+                func = getattr(xbmcCmmd, command)
+                func(*args)
                 
                 # service.unpublish()
             except Queue.Empty:
@@ -202,14 +201,10 @@ if __name__ == "__main__":
     except:
         print "Caught exception"
         if(udp):
-            print "Stopping UDP"
             udp.stop()
-            print "Joining UDP"
             udp.join()
         if(http):
-            print "Stopping HTTP"
             http.stop()
-            print "Joining HTTP"
             http.join()
         raise
 
