@@ -1,7 +1,7 @@
 import web, urllib2, re, xml.etree.cElementTree as et
 from pyomxplayer import OMXPlayer
 from urlparse import urlparse
-import avahi, dbus
+import avahi, dbus, sys
 from pprint import pprint
 import socket, pygame.image, pygame.display, subprocess, signal, os, logging
 from threading import Thread
@@ -65,6 +65,7 @@ class xbmcCommands:
     def PlayMedia(self, fullpath, tag, unknown1, unknown2, unknown3):
         global omx
         global parsed_path
+        global omxCommand
         #print '---'
         #print fullpath
         #print tag
@@ -87,7 +88,7 @@ class xbmcCommands:
         #print 'mediapath', mediapath
         if(omx):
             self.stopOMX()
-        omx = OMXPlayer(mediapath, args="-o hdmi")
+        omx = OMXPlayer(mediapath, args=omxCommand)
         omx.toggle_pause()
 
     def Pause(self, message):
@@ -110,7 +111,6 @@ class xbmcCommands:
         global service
         pygame.quit()
         exit()
-        # service.unpublish()
 
     def stopOMX(self, message = None):
         if OMXRunning():
@@ -142,12 +142,12 @@ class xbmcCommands:
         
 class image:
     def __init__(self, picture):
-        pygame.init()
+        # pygame.init()
         self.picture = pygame.image.load(picture)
         self.picture = pygame.transform.scale(self.picture,(1280,1024))
 
     def set(self):
-        pygame.mouse.set_visible(False)
+        # pygame.mouse.set_visible(False)
         pygame.display.set_mode(self.picture.get_size())
         main_surface = pygame.display.get_surface()
         main_surface.blit(self.picture, (0, 0))
@@ -185,6 +185,15 @@ if __name__ == "__main__":
         global queue
         global parsed_path
         global media_key
+        global omxCommand
+        args = len(sys.argv)
+        if args > 1: 
+            if sys.argv[1] == "hdmi":
+                omxCommand = '-o hdmi'
+                print "Audo output over HDMI"
+        else:
+            omxCommand = ''
+            print "Audio output over 3,5mm jack"
         media_key = None
         parsed_path = None
         queue = Queue.Queue()
