@@ -50,6 +50,7 @@ class OMXPlayer(object):
         self.chapters = 0
         self.subtitles = 0
         prop_matches = 0
+        self.finished = False
 
         while(True):
             line = self._process.readline()
@@ -101,7 +102,9 @@ class OMXPlayer(object):
                                             pexpect.EOF,
                                             self._DONE_REXP])
             if index == 1: continue
-            elif index in (2, 3): break
+            elif index in (2, 3):
+                self.finished = True
+                break
             else:
                 self.position = float(self._process.match.group(1))
             sleep(0.05)

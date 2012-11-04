@@ -67,6 +67,7 @@ class xbmcCommands:
         global parsed_path
         global omxCommand
         global media_key
+        global duration
         #print '---'
         #print fullpath
         #print tag
@@ -85,6 +86,7 @@ class xbmcCommands:
         #Construct the path to the media.
         parsed_path = urlparse(fullpath)
         media_key = key
+        duration = int(el.attrib['duration'])
         mediapath = parsed_path.scheme + "://" + parsed_path.netloc + el.attrib['key'] 
         #print 'mediapath', mediapath
         if(omx):
@@ -185,6 +187,8 @@ if __name__ == "__main__":
         global parsed_path
         global media_key
         global omxCommand
+        global duration
+        duration = 0
         args = len(sys.argv)
         if args > 1: 
             if sys.argv[1] == "hdmi":
@@ -219,8 +223,19 @@ if __name__ == "__main__":
                 # service.unpublish()
             except Queue.Empty:
                 pass
-            if(omx and OMXRunning()):
+            if(omx):
                 # print omx.position
+                if omx.finished:
+                    if (getMiliseconds(str(omx.position)) > (duration * .95)):
+                        setPlayed = parsed_path.scheme + "://" + parsed_path.netloc + "/:/scrobble?key=" + str(media_key) + "&identifier=com.plexapp.plugins.library"
+                        try:
+                            f = urllib2.urlopen(setPlayed)
+                        except urllib2.HTTPError:
+                            print "Failed to update plex that item was played: %s" % setPlayPos
+                            pass
+                    omx.stop()
+                    omx = None
+                    continue
                 pos = getMiliseconds(str(omx.position))
                 #TODO: make setPlayPos a function
                 setPlayPos =  parsed_path.scheme + "://" + parsed_path.netloc + '/:/progress?key=' + str(media_key) + '&identifier=com.plexapp.plugins.library&time=' + str(pos) + "&state=playing" 
