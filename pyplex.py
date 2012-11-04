@@ -118,27 +118,27 @@ class xbmcCommands:
 
     def SkipNext(self, message = None):
         if(omx):
-            omx.jump_30_fwd()
+            omx.jump_fwd_30()
 
     def SkipPrevious(self, message = None):
         if(omx):
-            omx.jump_30_rev()
+            omx.jump_rev_30()
 
     def StepForward(self, message = None):
         if(omx):
-            omx.jump_30_fwd()
+            omx.jump_fwd_30()
 
     def StepBack(self, message = None):
         if(omx):
-            omx.jump_30_rev()
+            omx.jump_rev_30()
 
     def BigStepForward(self, message = None):
         if(omx):
-            omx.jump_600_fwd()
+            omx.jump_fwd_600()
 
     def BigStepBack(self, message = None):
         if(omx):
-            omx.jump_600_rev()
+            omx.jump_rev_600()
         
 class image:
     def __init__(self, picture):
