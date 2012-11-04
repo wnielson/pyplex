@@ -32,23 +32,52 @@ class OMXPlayer(object):
         cmd = self._LAUNCH_CMD % (mediafile, args)
         self._process = pexpect.spawn(cmd)
         
+        #Set defaults, just in case we dont get them
         self.video = dict()
         self.audio = dict()
-        # Get file properties
-        file_props = self._FILEPROP_REXP.match(self._process.readline()).groups()
-        (self.audio['streams'], self.video['streams'],
-         self.chapters, self.subtitles) = [int(x) for x in file_props]
-        # Get video properties
-        video_props = self._VIDEOPROP_REXP.match(self._process.readline()).groups()
-        self.video['decoder'] = video_props[0]
-        self.video['dimensions'] = tuple(int(x) for x in video_props[1:3])
-        self.video['profile'] = int(video_props[3])
-        self.video['fps'] = float(video_props[4])
-        # Get audio properties
-        audio_props = self._AUDIOPROP_REXP.match(self._process.readline()).groups()
-        self.audio['decoder'] = audio_props[0]
-        (self.audio['channels'], self.audio['rate'],
-         self.audio['bps']) = [int(x) for x in audio_props[1:]]
+        self.video['decoder'] = "unknown"
+        self.video['dimensions'] = (0,0)
+        self.video['profile'] = 0
+        self.video['fps'] = 0
+        self.video['streams'] = 0
+        self.audio['decoder'] = "unknown"
+        self.audio['channels'] = 0
+        self.audio['rate'] = 0
+        self.audio['bps'] = 0
+        self.audio['streams'] = 0
+        self.chapters = 0
+        self.subtitles = 0
+        prop_matches = 0
+
+        while(True):
+            line = self._process.readline()
+            file_props_match = self._FILEPROP_REXP.match(line)
+            video_props_match = self._VIDEOPROP_REXP.match(line)
+            audio_props_match = self._AUDIOPROP_REXP.match(line)
+            status_match = self._STATUS_REXP.match(line)
+            if(file_props_match):
+                # Get file properties
+                file_props = file_props_match.groups()
+                (self.audio['streams'], self.video['streams'],
+                 self.chapters, self.subtitles) = [int(x) for x in file_props]
+                prop_matches += 1
+            if(video_props_match):
+                # Get video properties
+                video_props = video_props_match.groups()
+                self.video['decoder'] = video_props[0]
+                self.video['dimensions'] = tuple(int(x) for x in video_props[1:3])
+                self.video['profile'] = int(video_props[3])
+                self.video['fps'] = float(video_props[4])
+                prop_matches += 1
+            if(audio_props_match):
+                # Get audio properties
+                audio_props = audio_props_match.groups()
+                self.audio['decoder'] = audio_props[0]
+                (self.audio['channels'], self.audio['rate'],
+                 self.audio['bps']) = [int(x) for x in audio_props[1:]]
+                prop_matches += 1
+            if(prop_matches >= 3):
+                break
 
         if self.audio['streams'] > 0:
             self.current_audio_stream = 1
