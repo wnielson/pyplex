@@ -88,18 +88,20 @@ class xbmcCommands:
         #print 'mediapath', mediapath
         if(omx):
             self.stopOMX()
-        omx = OMXPlayer(mediapath, args=omxCommand)
-        omx.toggle_pause()
+        omx = OMXPlayer(mediapath, args=omxCommand, start_playback=True)
 
     def Pause(self, message):
         global omx
         if(omx):
+            omx.set_speed(1)
             omx.toggle_pause()
 
     def Play(self, message):
         global omx
         if(omx):
-            omx.toggle_pause()
+            ret = omx.set_speed(1)
+            if(ret == 0):
+                omx.toggle_pause()
 
     def Stop(self, message):
         global omx
@@ -118,19 +120,19 @@ class xbmcCommands:
 
     def SkipNext(self, message = None):
         if(omx):
-            omx.jump_fwd_30()
+            omx.increase_speed()
 
     def SkipPrevious(self, message = None):
         if(omx):
-            omx.jump_rev_30()
+            omx.decrease_speed()
 
     def StepForward(self, message = None):
         if(omx):
-            omx.jump_fwd_30()
+            omx.increase_speed()
 
     def StepBack(self, message = None):
         if(omx):
-            omx.jump_rev_30()
+            omx.decrease_speed()
 
     def BigStepForward(self, message = None):
         if(omx):

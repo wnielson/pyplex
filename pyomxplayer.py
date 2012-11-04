@@ -18,10 +18,12 @@ class OMXPlayer(object):
     _PAUSE_CMD = 'p'
     _TOGGLE_SUB_CMD = 's'
     _QUIT_CMD = 'q'
-    _JUMP_600_REV = '\x1b[B'
-    _JUMP_600_FWD = '\x1b[A'
-    _JUMP_30_FWD = '\x1b[C'
-    _JUMP_30_REV = '\x1b[D'
+    _INCREASE_SPEED = '2'
+    _DECREASE_SPEED = '1'
+    _JUMP_600_REV = '\x1b\x5b\x42'
+    _JUMP_600_FWD = '\x1b\x5b\x41'
+    _JUMP_30_FWD = '\x1b\x5b\x43'
+    _JUMP_30_REV = '\x1b\x5b\x44'
 
     paused = False
     subtitles_visible = True
@@ -89,6 +91,7 @@ class OMXPlayer(object):
         if not start_playback:
             self.toggle_pause()
         self.toggle_subtitles()
+        self._playback_speed = 1
 
 
     def _get_position(self):
@@ -126,8 +129,28 @@ class OMXPlayer(object):
     def jump_rev_600(self):
         self._process.send(self._JUMP_600_REV)
 
-    def set_speed(self):
-        raise NotImplementedError
+    def increase_speed(self):
+        self._process.send(self._INCREASE_SPEED)
+        self._playback_speed += 1
+
+    def decrease_speed(self):
+        self._process.send(self._DECREASE_SPEED)
+        self._playback_speed -= 1
+        if (self._playback_speed < 0):
+            self._playback_speed = 0
+
+    def set_speed(self, desired):
+        if((desired < 0) or (desired > 4)):
+            return 0
+        if (self._playback_speed > desired):
+            function = self.decrease_speed
+        elif (self._playback_speed == desired):
+            return 0
+        else:
+            function = self.increase_speed
+        while (self._playback_speed != desired):
+            function()
+        return 1
 
     def set_audiochannel(self, channel_idx):
         raise NotImplementedError
