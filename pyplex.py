@@ -66,6 +66,7 @@ class xbmcCommands:
         global omx
         global parsed_path
         global omxCommand
+        global media_key
         #print '---'
         #print fullpath
         #print tag
@@ -87,19 +88,21 @@ class xbmcCommands:
         mediapath = parsed_path.scheme + "://" + parsed_path.netloc + el.attrib['key'] 
         #print 'mediapath', mediapath
         if(omx):
-            self.stopOMX()
-        omx = OMXPlayer(mediapath, args=omxCommand)
-        omx.toggle_pause()
+            self.stop()
+        omx = OMXPlayer(mediapath, args=omxCommand, start_playback=True)
 
     def Pause(self, message):
         global omx
         if(omx):
+            omx.set_speed(1)
             omx.toggle_pause()
 
     def Play(self, message):
         global omx
         if(omx):
-            omx.toggle_pause()
+            ret = omx.set_speed(1)
+            if(ret == 0):
+                omx.toggle_pause()
 
     def Stop(self, message):
         global omx
@@ -107,40 +110,35 @@ class xbmcCommands:
             omx.stop()
 
     def stopPyplex(self, message):
-        self.stopOMX()
+        self.stop()
         global service
         pygame.quit()
         exit()
 
-    def stopOMX(self, message = None):
-        if OMXRunning():
-            os.kill(self.pid, signal.SIGKILL)
-
     def SkipNext(self, message = None):
         if(omx):
-            omx.jump_30_fwd()
+            omx.increase_speed()
 
     def SkipPrevious(self, message = None):
         if(omx):
-           omx.jump_30_rev()
+            omx.decrease_speed()
 
     def StepForward(self, message = None):
         if(omx):
-           omx.jump_30_fwd()
+            omx.increase_speed()
 
     def StepBack(self, message = None):
         if(omx):
-            omx.jump_30_rev()
+            omx.decrease_speed()
 
     def BigStepForward(self, message = None):
-       if(omx):
-            omx.jump_600_fwd()
+        if(omx):
+            omx.jump_fwd_600()
 
     def BigStepBack(self, message = None):
         if(omx):
-            omx.jump_600_rev()
-    # def setPlayPos(self, key, pos, status):
-
+            omx.jump_rev_600()
+        
 class image:
     def __init__(self, picture):
         # pygame.init()
@@ -212,11 +210,11 @@ if __name__ == "__main__":
             try:
                 command, args = queue.get(True, 2)
                 print "Got command: %s, args: %s" %(command, args)
-                try:
+                if not hasattr(xbmcCmmd, command):
+                    print "Command %s not implemented yet" % command
+                else:
                     func = getattr(xbmcCmmd, command)
                     func(*args)
-                except AttributeError:
-                    print "Command %s not implemented yet" % command
                 
                 # service.unpublish()
             except Queue.Empty:
@@ -229,18 +227,17 @@ if __name__ == "__main__":
                 try:
                     f = urllib2.urlopen(setPlayPos)
                 except urllib2.HTTPError:
+                    print "Failed to update plex play time, url: %s" % setPlayPos
                     pass
     except:
         print "Caught exception"
+        if(omx):
+            omx.stop()
         if(udp):
-            print "Stopping UDP"
             udp.stop()
-            print "Joining UDP"
             udp.join()
         if(http):
-            print "Stopping HTTP"
             http.stop()
-            print "Joining HTTP"
             http.join()
         raise
 
