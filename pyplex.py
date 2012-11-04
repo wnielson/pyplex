@@ -66,6 +66,7 @@ class xbmcCommands:
         global omx
         global parsed_path
         global omxCommand
+        global media_key
         #print '---'
         #print fullpath
         #print tag
@@ -87,7 +88,7 @@ class xbmcCommands:
         mediapath = parsed_path.scheme + "://" + parsed_path.netloc + el.attrib['key'] 
         #print 'mediapath', mediapath
         if(omx):
-            self.stopOMX()
+            self.stop()
         omx = OMXPlayer(mediapath, args=omxCommand, start_playback=True)
 
     def Pause(self, message):
@@ -109,14 +110,10 @@ class xbmcCommands:
             omx.stop()
 
     def stopPyplex(self, message):
-        self.stopOMX()
+        self.stop()
         global service
         pygame.quit()
         exit()
-
-    def stopOMX(self, message = None):
-        if OMXRunning():
-            os.kill(self.pid, signal.SIGKILL)
 
     def SkipNext(self, message = None):
         if(omx):
@@ -230,9 +227,12 @@ if __name__ == "__main__":
                 try:
                     f = urllib2.urlopen(setPlayPos)
                 except urllib2.HTTPError:
+                    print "Failed to update plex play time, url: %s" % setPlayPos
                     pass
     except:
         print "Caught exception"
+        if(omx):
+            omx.stop()
         if(udp):
             udp.stop()
             udp.join()
