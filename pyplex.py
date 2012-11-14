@@ -1,13 +1,23 @@
-import web, urllib2, re, xml.etree.cElementTree as et
-from pyomxplayer import OMXPlayer
-from urlparse import urlparse
-import avahi, dbus, sys
-from pprint import pprint
-import socket, pygame.image, pygame.display, subprocess, signal, os, logging
-from threading import Thread
-import Queue
-import udplistener
+import avahi
+import dbus
 import httplistener
+import logging
+import os
+import Queue
+import re
+import signal
+import socket
+import subprocess
+import sys
+import udplistener
+import urllib2
+import xml.etree.cElementTree as et
+
+from pprint import pprint
+from pyomxplayer import OMXPlayer
+from threading import Thread
+from urlparse import urlparse
+
 
 __all__ = ["ZeroconfService"]
 class ZeroconfService:
@@ -48,14 +58,6 @@ class ZeroconfService:
 
     def unpublish(self):
         self.group.Reset()
-
-
-        
-urls = (
-    '/xbmcCmds/xbmcHttp','xbmcCmdsXbmcHttp',
-    '/(.*)', 'stop', 'hello'
-)
-app = web.application(urls, globals())
 
 class hello:        
     def GET(self, message):
@@ -114,7 +116,7 @@ class xbmcCommands:
     def stopPyplex(self, message):
         self.stop()
         global service
-        pygame.quit()
+        #pygame.quit()
         exit()
 
     def SkipNext(self, message = None):
@@ -173,11 +175,23 @@ def getMiliseconds(s):
     miliseconds = int(3600000 * hours + 60000 * minutes + 1000 * seconds)
     return miliseconds
 
+
+def quit(omx, udp, http):
+    if(omx):
+        omx.stop()
+    if(udp):
+        udp.stop()
+        udp.join()
+    if(http):
+        http.stop()
+        http.join()
+
 xbmcCmmd = xbmcCommands()
 omx = None
 http = None
 udp = None
 pid = -1
+
 
 if __name__ == "__main__":
     try:
@@ -207,9 +221,9 @@ if __name__ == "__main__":
         http = httplistener.httplistener(queue)
         http.start()
         __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        f = open(os.path.join(__location__, 'image/logo.png'));
-        image = image(f)
-#        image.set()
+        #f = open(os.path.join(__location__, 'image/logo.png'));
+        #image = image(f)
+        #image.set()
         while True:
             try:
                 command, args = queue.get(True, 2)
@@ -244,15 +258,12 @@ if __name__ == "__main__":
                 except urllib2.HTTPError:
                     print "Failed to update plex play time, url: %s" % setPlayPos
                     pass
+    except KeyboardInterrupt:
+        sys.stdout.write("\rExiting...\n")
+        sys.stdout.flush()
+        quit(omx, udp, http)
     except:
         print "Caught exception"
-        if(omx):
-            omx.stop()
-        if(udp):
-            udp.stop()
-            udp.join()
-        if(http):
-            http.stop()
-            http.join()
+        quit(omx, udp, http)
         raise
 
