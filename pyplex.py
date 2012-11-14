@@ -1,21 +1,14 @@
 import avahi
 import dbus
 import httplistener
-import logging
-import os
 import Queue
-import re
-import signal
-import socket
 import subprocess
 import sys
 import udplistener
 import urllib2
 import xml.etree.cElementTree as et
 
-from pprint import pprint
 from pyomxplayer import OMXPlayer
-from threading import Thread
 from urlparse import urlparse
 
 
@@ -143,19 +136,6 @@ class xbmcCommands:
         if(omx):
             omx.jump_rev_600()
         
-class image:
-    def __init__(self, picture):
-        # pygame.init()
-        self.picture = pygame.image.load(picture)
-        self.picture = pygame.transform.scale(self.picture,(1280,1024))
-
-    def set(self):
-        # pygame.mouse.set_visible(False)
-        pygame.display.set_mode(self.picture.get_size())
-        main_surface = pygame.display.get_surface()
-        main_surface.blit(self.picture, (0, 0))
-        pygame.display.update()
-
 def OMXRunning():
     global pid
     p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
@@ -220,10 +200,7 @@ if __name__ == "__main__":
         udp.start()
         http = httplistener.httplistener(queue)
         http.start()
-        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        #f = open(os.path.join(__location__, 'image/logo.png'));
-        #image = image(f)
-        #image.set()
+
         while True:
             try:
                 command, args = queue.get(True, 2)
